@@ -19,10 +19,11 @@ def save_emb(name, dl):
     emb()
     return emb
 
-def get_topics(name):
+def get_topics(name, topic_num):
     tg = TopicGenerator(name=name,
                         client=st.session_state['CLIENT'], 
                         top_n=5,
+                        topic_num=topic_num,
                         embedder=st.session_state['emb'],
                         model_provider="OpenAI")
     topics = tg()
@@ -49,12 +50,12 @@ class QuestionEditor:
             if skip_cb:
                 st.session_state['new_questions'][i] = False
             
-            question = st.text_area("Question", row["question"])
+            question = st.text_area("Question", row["question"], key=f'question_ta_{i}')
             use_question = st.toggle("Use this question", False, key=f'question_{i}')
             if use_question:
                 st.session_state['new_questions'][i] = question
 
-            answer = st.text_area("Answer", row["altA"])
+            answer = st.text_area("Answer", row["altA"], key=f'answer_ta_{i}')
             use_answer = st.toggle("Use this answer", False, key=f'answer_{i}')
             if use_answer:
                 st.session_state['new_answers'][i] = answer
@@ -82,8 +83,11 @@ class QuestionEditor:
                 answer = st.session_state['new_answers'][i]
                 distractors = st.session_state['new_distractors'][i]
                 new_row = [question, answer] + distractors
-                new_df.loc[i] = new_row
-        st.session_state['new_df'] = new_df.reset_index(drop=True)
+                try:
+                    new_df.loc[i] = new_row
+                    st.session_state['new_df'] = new_df.reset_index(drop=True)
+                except ValueError:
+                    st.error(f"Error with question {i+1}. Please make sure all questions have a question, an answer and three distractors.")
     
     def __call__(self):
         if st.session_state.get('new_df') is not None:

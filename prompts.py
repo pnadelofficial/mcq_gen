@@ -120,7 +120,7 @@ TOPIC_GENERATION = """
 You will be given chunks from a transcript of a recorded class and the title of the transcript and you are to give back a list of topics that make up that transcript.
 Before you begin to compose your topic list, make sure to summarize and conceptualize the content in the transcript. This will help you produce the most accurate list of topics.
 Please make sure that topics do not overlap.
-Produce a minimum of 5 topics and maximum of 10 topics.
+Produce exactly {topic_num} topics.
 Return your answer as a Python list with a \n character between each element. For example:
 [
     Topic 1,

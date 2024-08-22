@@ -20,6 +20,7 @@ if st.session_state.get('name') is not None:
 
 num_questions_total = st.number_input("Enter total number of questions", min_value=1, max_value=100)
 num_questions = st.number_input("Enter number of questions per topic", min_value=1, max_value=10)
+topic_num = num_questions_total // num_questions
 
 cc_uploaded_files = st.file_uploader(
     "Upload course content", accept_multiple_files=True
@@ -47,7 +48,7 @@ if st.button("Generate MCQs"):
 
     with st.status('Generating topics...'):
         if st.session_state.get('topics') is None:
-            topics = utils.get_topics(name)
+            topics = utils.get_topics(name, topic_num=topic_num)
             st.session_state['topics'] = topics
 
     with st.status('Generating questions...'):
@@ -60,7 +61,7 @@ if st.button("Generate MCQs"):
                             model_provider="OpenAI",
                             topics=st.session_state['topics'],
                             few_shot=True,
-                            debug=num_questions_total if num_questions_total < len(st.session_state['topics']) else None) # TODO need to deal with when num_questions_total > len(topics)*num_questions :o
+                            debug=topic_num)
         questions = qg()
         st.session_state['ran_questions'] = True
 

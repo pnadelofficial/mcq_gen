@@ -122,11 +122,13 @@ class TopicGenerator:
     def __init__(self,
                  name,
                  top_n,
+                 topic_num,
                  embedder: Embedder,
                  client: OpenAI,
                  model_provider) -> None:
         self.name = name
         self.top_n = top_n
+        self.topic_num = topic_num
         self.embedder = embedder
         self.client = client
         self.model_provider = model_provider
@@ -140,7 +142,8 @@ class TopicGenerator:
             query_embedding = self.embedder._embed(title)
             chunk_ids = (self.embedded_docs @ query_embedding).argsort()[::-1][:self.top_n]
             transcript = '\n'.join([self.embedder.chunked_texts[i]['text'] for i in chunk_ids])
-            prompt = prompts.TOPIC_GENERATION.format(title=title, transcript=transcript)
+            print("len of topics", self.topic_num)
+            prompt = prompts.TOPIC_GENERATION.format(title=title, transcript=transcript, topic_num=self.topic_num)
             messages = [
                 {'role':'user', 'content':prompt}
             ]
