@@ -164,4 +164,3 @@ cython_debug/
 *.ipynb
 from_cluster
 .streamlit
-data
