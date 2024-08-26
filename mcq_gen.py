@@ -34,7 +34,7 @@ class Dataloader:
     def __call__(self):
         for file in os.listdir(self.base_path):
             if file.startswith('cc_'):
-                self.texts_with_metadata.append(self._read_files_with_metadata(file))
+                self.texts_with_metadata.append(self._read_files_with_metadata(os.path.join(self.base_path, file)))
         return self.texts_with_metadata
 
 class Embedder:
