@@ -5,7 +5,6 @@ import utils
 from datetime import datetime
 from openai import OpenAI
 import collections
-import subprocess
 from functools import partial
 
 st.title("Multiple Choice Question Generation")
