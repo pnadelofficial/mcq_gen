@@ -22,7 +22,7 @@ class Dataloader:
 
     def _read_files_with_metadata(self, filename):
         if filename.endswith('.txt'):
-            with open(os.path.join(self.base_path, filename), 'r') as f:
+            with open(filename, 'r') as f:
                 text = f.read()
         else:
             pdf = pypdf.PdfReader(open(filename, 'rb'))
