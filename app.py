@@ -15,7 +15,7 @@ if st.session_state.get('CLIENT') is None:
     st.session_state['CLIENT'] = OpenAI(api_key=st.secrets['openai']["open_ai_key"])
     
 name = st.text_input("Enter your course title", key='name_input')
-if st.session_state.get('name') is not None:
+if st.session_state.get('name') is None:
     print(f"Current working directory: {os.getcwd()}")
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
     print(f"Base directory: {BASE_DIR}")
