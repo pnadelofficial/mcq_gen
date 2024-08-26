@@ -2,3 +2,6 @@ pyautogen
 pandas
 numpy 
 langchain
+pypdf
+openai
+nltk
