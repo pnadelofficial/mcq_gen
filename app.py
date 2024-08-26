@@ -17,6 +17,7 @@ if st.session_state.get('CLIENT') is None:
     
 name = st.text_input("Enter your course title", key='name_input')
 if st.session_state.get('name') is not None:
+    os.makedirs("./data", exist_ok=True)
     os.makedirs(f"./data/{name}", exist_ok=True)
     st.session_state['name'] = name
 
