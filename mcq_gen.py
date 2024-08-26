@@ -26,9 +26,9 @@ class Dataloader:
                 text = f.read()
         else:
             pdf = pypdf.PdfReader(open(filename, 'rb'))
-            data = ''
+            text = ''
             for page in pdf.pages:
-                data += page.extract_text()
+                text += page.extract_text()
         return {'title': filename, 'text': text}
     
     def __call__(self):
