@@ -18,7 +18,6 @@ if st.session_state.get('CLIENT') is None:
 name = st.text_input("Enter your course title", key='name_input')
 if st.session_state.get('name') is not None:
     os.makedirs(f"./data/{name}", exist_ok=True)
-    subprocess.run(['ls'])
     st.session_state['name'] = name
 
 if st.session_state.get('current_question') is None:
@@ -36,6 +35,7 @@ ex_uploaded_files = st.file_uploader(
 )
 
 for uploaded_file in cc_uploaded_files:
+    subprocess.run(['ls'])
     with open(f"./data/{name}/cc_{uploaded_file.name}", "wb") as f:
         f.write(uploaded_file.getbuffer())
 
