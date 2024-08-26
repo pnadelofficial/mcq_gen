@@ -179,12 +179,14 @@ class QuestionGenerator:
 
 ## extra column for citations
 
-    def __call__(self):
+    def __call__(self, cb=None):
         DFs = []
         if self.debug:
             self.topics = self.topics[:self.debug] 
         for i, topic in enumerate(self.topics):
             print(f"Topic {i+1}/{len(self.topics)}")
+            if cb:
+                cb(i, topic, len(self.topics))
             self.mcqc = MCQChat(name=self.name, 
                                 query=topic,
                                 model_provider=self.model_provider,

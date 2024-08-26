@@ -5,18 +5,22 @@ import utils
 from datetime import datetime
 from openai import OpenAI
 import collections
+from functools import partial
 
 st.title("Multiple Choice Question Generation")
 
 ## chat for question preferences
 
 if st.session_state.get('CLIENT') is None:
-    st.session_state['CLIENT'] = OpenAI()
-
-name = st.text_input("Enter your course title")
+    st.session_state['CLIENT'] = OpenAI(api_key=st.secrets['openai']["open_ai_key"])
+    
+name = st.text_input("Enter your course title", key='name_input')
 if st.session_state.get('name') is not None:
     os.makedirs(f"./data/{name}", exist_ok=True)
     st.session_state['name'] = name
+
+if st.session_state.get('current_question') is None:
+    st.session_state['completed_questions'] = []
 
 num_questions_total = st.number_input("Enter total number of questions", min_value=1, max_value=100)
 num_questions = st.number_input("Enter number of questions per topic", min_value=1, max_value=10)
@@ -51,10 +55,13 @@ if st.button("Generate MCQs"):
             topics = utils.get_topics(name, topic_num=topic_num)
             st.session_state['topics'] = topics
 
-    with st.status('Generating questions...'):
+    if st.session_state.get('gen_questions_expanded') is None:
+        st.session_state['gen_questions_expanded'] = True
+    with st.status('Generating questions...', expanded=st.session_state['gen_questions_expanded']):
         if st.session_state.get('ret') is None:
             ret = utils.get_retriever(name)
             st.session_state['ret'] = ret        
+        pbar = st.progress(0, text='Writing questions...')
         qg = QuestionGenerator(name=name, 
                             num_questions_each=num_questions,
                             retriver=st.session_state['ret'],
@@ -62,8 +69,10 @@ if st.button("Generate MCQs"):
                             topics=st.session_state['topics'],
                             few_shot=True,
                             debug=topic_num)
-        questions = qg()
+        questions = qg(cb=partial(utils.pbar_callback, pbar=pbar))
+        pbar.progress(1.0, text='Questions written!')
         st.session_state['ran_questions'] = True
+    utils.toggle_expander()
 
 if (st.session_state.get('questions') is None) and (st.session_state['ran_questions']):
     st.session_state['questions'] = questions

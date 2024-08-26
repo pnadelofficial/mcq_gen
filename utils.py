@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from mcq_gen import Dataloader, Embedder, TopicGenerator, Retriever
 import os 
+# import app
 
 os.environ["OPENAI_API_KEY"] = st.secrets['openai']["open_ai_key"]
 
@@ -97,3 +98,12 @@ class QuestionEditor:
                 return df.to_csv().encode("utf-8")
             csv = convert_df(st.session_state['new_df'])
             return csv
+
+def pbar_callback(i, topic, topic_len, pbar):
+    if topic.strip():
+        pbar.progress((i/topic_len), text=f"Writing questions on {topic.replace(',','')}")
+    else:
+        pbar.progress(0, text="Writing questions...")
+
+def toggle_expander():
+    st.session_state['gen_questions_expanded'] = not st.session_state['gen_questions_expanded']
