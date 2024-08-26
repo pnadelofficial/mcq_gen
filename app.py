@@ -16,9 +16,13 @@ if st.session_state.get('CLIENT') is None:
     
 name = st.text_input("Enter your course title", key='name_input')
 if st.session_state.get('name') is not None:
+    print(f"Current working directory: {os.getcwd()}")
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+    print(f"Base directory: {BASE_DIR}")
     data_dir = os.path.join(BASE_DIR, "data", name)
+    print(f"Data directory: {data_dir}")
     os.makedirs(data_dir, exist_ok=True)
+    print((f"Directory created successfully: {os.path.exists(data_dir)}"))
     st.session_state['name'] = name
 
 if st.session_state.get('current_question') is None:
