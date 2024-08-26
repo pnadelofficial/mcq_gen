@@ -36,7 +36,6 @@ ex_uploaded_files = st.file_uploader(
 )
 
 for uploaded_file in cc_uploaded_files:
-    subprocess.run(['ls -la'])
     with open(f"./data/{name}/cc_{uploaded_file.name}", "wb") as f:
         f.write(uploaded_file.getbuffer())
 
