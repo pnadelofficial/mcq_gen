@@ -117,6 +117,7 @@ class Embedder:
             self._embed_docs()
             np.save(f"./data/{self.name}/embeddings.npy", self.embedded_docs)
             return self.embedded_docs
+        # graph rag here
 
 class TopicGenerator:
     def __init__(self,

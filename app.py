@@ -15,7 +15,7 @@ if st.session_state.get('CLIENT') is None:
     st.session_state['CLIENT'] = OpenAI(api_key=st.secrets['openai']["open_ai_key"])
     
 name = st.text_input("Enter your course title", key='name_input')
-if st.session_state.get('name') is None:
+if (st.session_state.get('name') is None) or (st.session_state.get('name') != name):
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
     data_dir = os.path.join(BASE_DIR, "data", name)
     os.makedirs(data_dir, exist_ok=True)
@@ -64,12 +64,13 @@ if st.button("Generate MCQs"):
             ret = utils.get_retriever(name)
             st.session_state['ret'] = ret        
         pbar = st.progress(0, text='Writing questions...')
+        few_shot = True if len(ex_uploaded_files) > 0 else False
         qg = QuestionGenerator(name=name, 
                             num_questions_each=num_questions,
                             retriver=st.session_state['ret'],
                             model_provider="OpenAI",
                             topics=st.session_state['topics'],
-                            few_shot=True,
+                            few_shot=few_shot,
                             debug=topic_num)
         questions = qg(cb=partial(utils.pbar_callback, pbar=pbar))
         pbar.progress(1.0, text='Questions written!')
