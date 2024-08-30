@@ -24,24 +24,41 @@ if (st.session_state.get('name') is None) or (st.session_state.get('name') != na
 if st.session_state.get('current_question') is None:
     st.session_state['completed_questions'] = []
 
+num_questions_help = """
+In addition to the total number of questions, you can specify the number of questions per topic. 
+These topics are generated from the course content you upload and are used to generate questions.
+The value you enter here will be used to divide the total number of questions you want to generate over all of the generated topics.
+""".strip()
+
 num_questions_total = st.number_input("Enter total number of questions", min_value=1, max_value=100)
-num_questions = st.number_input("Enter number of questions per topic", min_value=1, max_value=10)
+num_questions = st.number_input("Enter number of questions per topic", min_value=1, max_value=10, help=num_questions_help)
 topic_num = num_questions_total // num_questions
 
 cc_uploaded_files = st.file_uploader(
     "Upload course content", accept_multiple_files=True
 )
-ex_uploaded_files = st.file_uploader(
-    "Upload example questions", accept_multiple_files=True
-)
+
+fw_check = st.checkbox("Use example questions", key='fw_check')
+if fw_check:
+    st.warning("""
+        Before you upload example questions, please make sure that each question is formatted as follows:
+            1) Each question is followed by a new line.
+            2) The answer choices are followed by a new line.
+            3) The correct answer is wrapped by two asterisks.
+            4) Questions should be separated by two new lines.
+    """.strip())
+    ex_uploaded_files = st.file_uploader(
+        "Upload example questions", accept_multiple_files=True
+    )
 
 for uploaded_file in cc_uploaded_files:
     with open(f"./data/{name}/cc_{uploaded_file.name}", "wb") as f:
         f.write(uploaded_file.getbuffer())
 
-for uploaded_file in ex_uploaded_files:
-    with open(f"./data/{name}/ex_{uploaded_file.name}", "wb") as f:
-        f.write(uploaded_file.getbuffer())
+if fw_check:
+    for uploaded_file in ex_uploaded_files:
+        with open(f"./data/{name}/ex_{uploaded_file.name}", "wb") as f:
+            f.write(uploaded_file.getbuffer())
 
 st.session_state['ran_questions'] = False
 if st.button("Generate MCQs"):
