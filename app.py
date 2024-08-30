@@ -104,3 +104,7 @@ if st.session_state.get('questions') is not None:
             file_name=f"{name}_mcqs_{datetime.now().strftime('%Y%m%d%H%M%S')}.csv",
             mime="text/csv"
         )
+
+if st.button("Start Over"):
+    st.session_state.clear()
+    st.rerun()
