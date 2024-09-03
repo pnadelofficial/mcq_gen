@@ -81,7 +81,7 @@ if st.button("Generate MCQs"):
             ret = utils.get_retriever(name)
             st.session_state['ret'] = ret        
         pbar = st.progress(0, text='Writing questions...')
-        few_shot = True if len(fw_check) > 0 else False
+        few_shot = True if fw_check > 0 else False
         qg = QuestionGenerator(name=name, 
                             num_questions_each=num_questions,
                             retriver=st.session_state['ret'],
