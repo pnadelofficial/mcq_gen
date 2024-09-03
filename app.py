@@ -112,7 +112,7 @@ if st.session_state.get('new_distractors') is None:
 if st.session_state.get('questions') is not None:
     qe = utils.QuestionEditor(st.session_state['questions'])
     csv = qe()
-    if st.session_state.get('csv') is None:
+    if (st.session_state.get('csv') is None) or (csv != st.session_state.get('csv')):
         st.session_state['csv'] = csv
     if st.session_state.get('csv') is not None:
         st.download_button(
