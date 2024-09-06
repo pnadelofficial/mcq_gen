@@ -149,7 +149,7 @@ class TopicGenerator:
                 {'role':'user', 'content':prompt}
             ]
             completion = self.client.chat.completions.create(
-                model=self.model,
+                model=self.model, # gpt-4o-mini
                 messages=messages,
                 temperature=random.uniform(0.8, 1.2)
             )
