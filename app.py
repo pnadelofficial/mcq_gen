@@ -125,3 +125,5 @@ if st.session_state.get('questions') is not None:
 if st.button("Start Over"):
     st.session_state.clear()
     st.rerun()
+
+st.markdown("<footer><small>Assembed by Peter Nadel | Tufts University | Tufts Technology Services | Reserch Technology</small></footer>", unsafe_allow_html=True) 

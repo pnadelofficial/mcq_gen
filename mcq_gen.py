@@ -10,6 +10,7 @@ import prompts
 import re
 from openai import OpenAI
 import random
+import docx
 
 nltk.download('punkt_tab')
 
@@ -24,7 +25,12 @@ class Dataloader:
         if filename.endswith('.txt'):
             with open(filename, 'r') as f:
                 text = f.read()
-        else:
+        elif filename.endswith('.docx'):
+            doc = docx.Document(filename)
+            text = ''
+            for para in doc.paragraphs:
+                text += para.text
+        elif filename.endswith('.pdf'):
             pdf = pypdf.PdfReader(open(filename, 'rb'))
             text = ''
             for page in pdf.pages:
