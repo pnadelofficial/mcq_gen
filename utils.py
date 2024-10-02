@@ -1,10 +1,38 @@
 import streamlit as st  
 import pandas as pd
-from mcq_gen import Dataloader, Embedder, TopicGenerator, Retriever
+from mcq_gen import Dataloader, Embedder, TopicGenerator, Retriever, Conversation, Summarizer
 import os 
-# import app
 
 os.environ["OPENAI_API_KEY"] = st.secrets['openai']["open_ai_key"]
+
+@st.fragment
+def conversation():
+    with st.expander("Conversation", expanded=st.session_state.get("expander_state")):
+        for message in st.session_state['convo_messages']:
+            if message["role"] == "system":
+                continue
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
+
+        if prompt := st.chat_input("Enter a response"):
+            st.session_state['convo_messages'].append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
+            
+            with st.chat_message("assistant"):
+                convo = Conversation(client=st.session_state['CLIENT'], messages=st.session_state['convo_messages'])
+                res = convo()
+                response = st.write_stream(res)
+            st.session_state['convo_messages'].append({"role": "assistant", "content": response})
+        
+        finish_btn = st.button("Finish conversation")
+        if finish_btn:
+            summarizer = Summarizer(client=st.session_state['CLIENT'], messages=st.session_state['convo_messages'])
+            summary = summarizer()
+            st.session_state['summary'] = summary
+            st.session_state["expander_state"] = not st.session_state.get("expander_state")
+    if st.session_state.get('summary'):
+        st.success("Conversation recorded!")
 
 @st.cache_data
 def get_dl(name):

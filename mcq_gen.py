@@ -14,6 +14,37 @@ import docx
 
 nltk.download('punkt_tab')
 
+class Conversation:
+    def __init__(self, 
+                 client,
+                 messages) -> None:
+        self.client = client
+        self.messages = messages
+    
+    def __call__(self):
+        completion = self.client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=self.messages,
+            temperature=random.uniform(0.8, 1.2),
+            stream=True
+        )
+        return completion
+
+class Summarizer:
+    def __init__(self,
+                 client,
+                 messages) -> None:
+        self.client = client
+        self.text = str(messages)
+    
+    def __call__(self):
+        completion = self.client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role":"assistant", "content":prompts.SUMMARIZER.format(transcript=self.text)}],
+            temperature=random.uniform(0.8, 1.2)
+        )
+        return completion.choices[0].message.content.strip()
+
 class Dataloader:
     def __init__(self,
                  name) -> None:
@@ -174,6 +205,7 @@ class QuestionGenerator:
                  subject=None,
                  topics=None,
                  few_shot=False,
+                 summary=False,
                  debug=None) -> None:
         self.name = name
         self.num_questions_each = num_questions_each
@@ -181,6 +213,7 @@ class QuestionGenerator:
         self.model_provider = model_provider
         self.subject = subject
         self.topics = topics
+        self.summary = summary
         self.few_shot = few_shot
         self.debug = debug
 
@@ -199,7 +232,8 @@ class QuestionGenerator:
                                 model_provider=self.model_provider,
                                 num_questions=self.num_questions_each, 
                                 retriver=self.retriever, 
-                                few_shot=self.few_shot, 
+                                few_shot=self.few_shot,
+                                summary=self.summary, 
                                 subject=self.subject)
             qs = self.mcqc(topic.replace(',', '').strip())
             df = self.mcqc.to_df(qs)
@@ -240,6 +274,7 @@ class MCQChat:
                  num_questions=3,
                  max_rounds=25,
                  few_shot=False,
+                 summary=False,
                  subject=None) -> None:
         self.name = name
         self.retriever = retriver
@@ -248,6 +283,7 @@ class MCQChat:
         self.num_questions = num_questions
         self.max_rounds = max_rounds
         self.few_shot = few_shot
+        self.summary = summary
         self.subject = subject
         self.model = 'gpt-4o-mini' if self.model_provider == 'OpenAI' else 'claude' ## TODO implement Claude (claudette: https://github.com/AnswerDotAI/claudette)
 
@@ -265,9 +301,15 @@ class MCQChat:
                 with open(f'./data/{self.name}/{f}') as f:
                     ex_qs.append(f.read())
             ex_qs = '\n'.join(ex_qs)
-            system_message = prompts.QUIZZER_PROMPT_AGENTS_FEW_SHOT.format(num_questions=self.num_questions, examples=ex_qs)
+            if self.summary:
+                system_message = prompts.QUIZZER_PROMPT_AGENTS_FEW_SHOT_SUMMARY.format(num_questions=self.num_questions, examples=ex_qs, summary=self.summary)
+            else:
+                system_message = prompts.QUIZZER_PROMPT_AGENTS_FEW_SHOT.format(num_questions=self.num_questions, examples=ex_qs)
         else:
-            system_message = prompts.QUIZZER_PROMPT_AGENTS.format(num_questions=self.num_questions)
+            if self.summary:
+                system_message = prompts.QUIZZER_PROMPT_AGENTS_SUMMARY.format(num_questions=self.num_questions, summary=self.summary)
+            else:
+                system_message = prompts.QUIZZER_PROMPT_AGENTS.format(num_questions=self.num_questions)
         chunks = self.retriever(self.query, k=5)
         content_message = prompts.USER_PROMPT_AGENTS.format(question=query, summaries=chunks)
 
