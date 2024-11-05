@@ -3,16 +3,22 @@ import os
 from mcq_gen import QuestionGenerator
 import utils
 from datetime import datetime
-from openai import OpenAI
 import collections
 from functools import partial
 import subprocess
 import prompts
+from openai import OpenAI
+from anthropic import Anthropic
 
 st.title("Multiple Choice Question Generation")
 
-if st.session_state.get('CLIENT') is None:
-    st.session_state['CLIENT'] = OpenAI(api_key=st.secrets['openai']["open_ai_key"])
+key_input = utils.get_api_key_sidebar()
+
+# if st.session_state.get('CLIENT') is None:
+#     if os.environ.get("ANTHROPIC_API_KEY"):
+#         st.session_state['CLIENT'] = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+#     elif os.environ.get("OPENAI_API_KEY") and not os.environ.get("ANTHROPIC_API_KEY"):
+#         st.session_state['CLIENT'] = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
     
 name = st.text_input("Enter your course title", key='name_input')
 if (st.session_state.get('name') is None) or (st.session_state.get('name') != name):
@@ -40,6 +46,7 @@ if convo:
 else:
     if st.session_state.get('summary') is None:
         st.session_state['summary'] = False
+print(type(st.session_state.get("CLIENT")))
 
 num_questions_help = """
 In addition to the total number of questions, you can specify the number of questions per topic. 
@@ -99,11 +106,10 @@ if st.button("Generate MCQs"):
             st.session_state['ret'] = ret        
         pbar = st.progress(0, text='Writing questions...')
         few_shot = True if fw_check > 0 else False
-        print(st.session_state['summary'])
         qg = QuestionGenerator(name=name, 
                             num_questions_each=num_questions,
                             retriver=st.session_state['ret'],
-                            model_provider="OpenAI",
+                            model_provider="OpenAI" if isinstance(st.session_state.get("CLIENT"), OpenAI) else "Anthropic",
                             topics=st.session_state['topics'],
                             few_shot=few_shot,
                             summary=st.session_state['summary'],

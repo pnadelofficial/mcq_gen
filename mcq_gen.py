@@ -9,40 +9,57 @@ import nltk
 import prompts
 import re
 from openai import OpenAI
+from anthropic import Anthropic
 import random
 import docx
+import streamlit as st
+import requests
 
 nltk.download('punkt_tab')
 
 class Conversation:
     def __init__(self, 
-                 client,
+                 client: OpenAI | Anthropic, 
                  messages) -> None:
         self.client = client
         self.messages = messages
     
     def __call__(self):
-        completion = self.client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=self.messages,
-            temperature=random.uniform(0.8, 1.2),
-            stream=True
-        )
+        if isinstance(self.client, Anthropic):
+            completion = self.client.messages.create(
+                model="claude-3-sonnet-20240229",
+                messages=self.messages,
+                temperature=random.uniform(0.8, 1.2)
+            ) 
+        else:       
+            completion = self.client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=self.messages,
+                temperature=random.uniform(0.8, 1.2),
+                stream=True
+            )
         return completion
 
 class Summarizer:
     def __init__(self,
-                 client,
+                 client: OpenAI | Anthropic,
                  messages) -> None:
         self.client = client
         self.text = str(messages)
     
     def __call__(self):
-        completion = self.client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role":"assistant", "content":prompts.SUMMARIZER.format(transcript=self.text)}],
-            temperature=random.uniform(0.8, 1.2)
-        )
+        if isinstance(self.client, Anthropic):
+            completion = self.client.messages.create(
+                model="claude-3-sonnet-20240229",
+                messages=[{"role":"assistant", "content":prompts.SUMMARIZER.format(transcript=self.text)}],
+                temperature=random.uniform(0.8, 1.2)
+            )
+        else:
+            completion = self.client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role":"assistant", "content":prompts.SUMMARIZER.format(transcript=self.text)}],
+                temperature=random.uniform(0.8, 1.2)
+            )
         return completion.choices[0].message.content.strip()
 
 class Dataloader:
@@ -76,7 +93,7 @@ class Dataloader:
 
 class Embedder:
     def __init__(self,
-                 client,
+                 client: OpenAI | Anthropic,
                  embedding_model,
                  dataloader,
                  name,
@@ -135,8 +152,28 @@ class Embedder:
                 self.chunked_texts.append({'title': doc['title'], 'text': chunk, 'chunk_id': i})
     
     def _embed(self, text):
-        res = self.client.embeddings.create(input=text, model=self.embedding_model)
-        return np.array(res.data[0].embedding)
+        if isinstance(self.client, Anthropic):
+            jinaai_api_key = st.secrets["jinaai"]["jinaai_api_key"]
+            url = 'https://api.jina.ai/v1/embeddings'
+            headers = {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer jina_9cea680e3aa049cb8c6139284070280du_1bTdS4_JufxttsPIrYg71rhStm'
+            }
+            data = {
+                "model": "jina-embeddings-v3",
+                "task": "retrieval.passage",
+                "dimensions": 1024,
+                "late_chunking": False,
+                "embedding_type": "float",
+                "input": [text]
+            }
+            response = requests.post(url, headers=headers, json=data)
+            res = response.json()
+            embedding = np.array(res['data'][0]['embedding'])
+        else:
+            res = self.client.embeddings.create(input=text, model=self.embedding_model)
+            embedding = np.array(res.data[0].embedding)
+        return embedding
     
     def _embed_docs(self):
         self.embedded_docs = []
@@ -162,35 +199,46 @@ class TopicGenerator:
                  top_n,
                  topic_num,
                  embedder: Embedder,
-                 client: OpenAI,
+                 client: OpenAI | Anthropic,
                  model_provider) -> None:
         self.name = name
         self.top_n = top_n
         self.topic_num = topic_num
         self.embedder = embedder
         self.client = client
-        self.model_provider = model_provider
-        self.model = 'gpt-4o-mini' if self.model_provider == 'OpenAI' else 'claude' ## TODO implement Claude (claudette: https://github.com/AnswerDotAI/claudette)
+        self.model_provider = "OpenAI" if isinstance(client, OpenAI) else "Anthropic"
+        self.model = 'gpt-4o-mini' if self.model_provider == 'OpenAI' else 'claude-3-sonnet-20240229' ## TODO implement Claude (claudette: https://github.com/AnswerDotAI/claudette)
         self.embedded_docs = np.load(f"./data/{self.name}/embeddings.npy")
 
     def __call__(self):
         self.topics = []
         titles = [doc['title'].replace('cc_', '') for doc in self.embedder.texts_with_metadata]
         for title in titles:
+            print("embedder client type: ", type(self.embedder.client))
             query_embedding = self.embedder._embed(title)
             chunk_ids = (self.embedded_docs @ query_embedding).argsort()[::-1][:self.top_n]
+            print(chunk_ids, len(self.embedder.chunked_texts))
             transcript = '\n'.join([self.embedder.chunked_texts[i]['text'] for i in chunk_ids])
-            print("len of topics", self.topic_num)
             prompt = prompts.TOPIC_GENERATION.format(title=title, transcript=transcript, topic_num=self.topic_num)
             messages = [
                 {'role':'user', 'content':prompt}
             ]
-            completion = self.client.chat.completions.create(
-                model=self.model, # gpt-4o-mini
-                messages=messages,
-                temperature=random.uniform(0.8, 1.2)
-            )
-            raw = completion.choices[0].message.content
+            if isinstance(self.client, Anthropic):
+                completion = self.client.messages.create(
+                    max_tokens=1024,
+                    model=self.model,
+                    messages=messages,
+                    temperature=-1# random.uniform(0.8, 1.2)
+                )
+                print(completion)
+                raw = completion.content[0].text
+            else:
+                completion = self.client.chat.completions.create(
+                    model=self.model,
+                    messages=messages,
+                    temperature=random.uniform(0.8, 1.2)
+                )
+                raw = completion.choices[0].message.content
             topics = re.findall(r'\[.*?\]', raw, re.DOTALL)[0]
             topics = [t.replace('[', '').replace(']', '').strip() for t in topics.split('\n') if t.strip() != '']
             self.topics.extend(topics)
@@ -246,7 +294,7 @@ class QuestionGenerator:
 
 class Retriever:
     def __init__(self,
-                 client,
+                 client: OpenAI | Anthropic,
                  name,
                  embedder: Embedder,
                  embedding_model) -> None:
@@ -257,8 +305,28 @@ class Retriever:
         self.embedded_docs = np.load(f"./data/{self.name}/embeddings.npy")
     
     def _embed(self, text):
-        res = self.client.embeddings.create(input=text, model=self.embedding_model)
-        return np.array(res.data[0].embedding)
+        if isinstance(self.client, Anthropic):
+            jinaai_api_key = st.secrets["jinaai"]["jinaai_api_key"]
+            url = 'https://api.jina.ai/v1/embeddings'
+            headers = {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer jina_9cea680e3aa049cb8c6139284070280du_1bTdS4_JufxttsPIrYg71rhStm'
+            }
+            data = {
+                "model": "jina-embeddings-v3",
+                "task": "retrieval.passage",
+                "dimensions": 1024,
+                "late_chunking": False,
+                "embedding_type": "float",
+                "input": [text]
+            }
+            response = requests.post(url, headers=headers, json=data)
+            res = response.json()
+            embedding = np.array(res['data'][0]['embedding'])
+        else:
+            res = self.client.embeddings.create(input=text, model=self.embedding_model)
+            embedding = np.array(res.data[0].embedding)
+        return embedding
     
     def __call__(self, query, k=5):
         query_embedding = self._embed(query)
@@ -285,11 +353,12 @@ class MCQChat:
         self.few_shot = few_shot
         self.summary = summary
         self.subject = subject
-        self.model = 'gpt-4o-mini' if self.model_provider == 'OpenAI' else 'claude' ## TODO implement Claude (claudette: https://github.com/AnswerDotAI/claudette)
+        self.model = 'gpt-4o-mini' if self.model_provider == 'OpenAI' else 'claude-3-sonnet-20240229' ## TODO implement Claude (claudette: https://github.com/AnswerDotAI/claudette)
 
         config_list = {'config_list': [{
                 'model': self.model,
-                'api_key': os.environ.get("OPENAI_API_KEY"),
+                'api_key': st.session_state["API_KEY"],
+                "api_type": "openai" if self.model_provider == "OpenAI" else "anthropic",
                 "temperature":random.uniform(0.8, 1.2)
             }]
         }

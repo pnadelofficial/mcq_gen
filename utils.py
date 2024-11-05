@@ -1,9 +1,29 @@
 import streamlit as st  
 import pandas as pd
 from mcq_gen import Dataloader, Embedder, TopicGenerator, Retriever, Conversation, Summarizer
-import os 
+from anthropic import Anthropic
+from openai import OpenAI
 
-os.environ["OPENAI_API_KEY"] = st.secrets['openai']["open_ai_key"]
+def get_api_key_sidebar():
+    with st.sidebar:
+        key_input = st.text_input("Enter your OpenAI key") # or Anthropic API - Autogen not working for Claude
+    if key_input.strip():
+        if "ant" in key_input:
+            # os.environ["ANTHROPIC_API_KEY"] = key_input
+            if st.session_state.get('CLIENT') is None:
+                st.session_state['CLIENT'] = Anthropic(api_key=key_input)
+            if st.session_state.get("API_KEY") is None:
+                st.session_state["API_KEY"] = key_input
+        else:
+            # os.environ["OPENAI_API_KEY"] = key_input
+            if st.session_state.get('CLIENT') is None:
+                st.session_state['CLIENT'] = OpenAI(api_key=key_input)
+            if st.session_state.get("API_KEY") is None:
+                st.session_state["API_KEY"] = key_input
+    else:
+        st.error("""#### Please enter your API key in the sidebar on the left
+**Without one, nothing will work.**
+                 """)
 
 @st.fragment
 def conversation():
