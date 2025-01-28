@@ -254,7 +254,8 @@ class QuestionGenerator:
                  topics=None,
                  few_shot=False,
                  summary=False,
-                 debug=None) -> None:
+                 debug=None,
+                 use_notebook=False) -> None:
         self.name = name
         self.num_questions_each = num_questions_each
         self.retriever = retriver
@@ -264,6 +265,7 @@ class QuestionGenerator:
         self.summary = summary
         self.few_shot = few_shot
         self.debug = debug
+        self.use_notebook = use_notebook
 
 ## extra column for citations
 
@@ -282,7 +284,8 @@ class QuestionGenerator:
                                 retriver=self.retriever, 
                                 few_shot=self.few_shot,
                                 summary=self.summary, 
-                                subject=self.subject)
+                                subject=self.subject,
+                                use_notebook=self.use_notebook)
             qs = self.mcqc(topic.replace(',', '').strip())
             df = self.mcqc.to_df(qs)
             DFs.append(df)
@@ -343,7 +346,8 @@ class MCQChat:
                  max_rounds=25,
                  few_shot=False,
                  summary=False,
-                 subject=None) -> None:
+                 subject=None,
+                 use_notebook=False) -> None:
         self.name = name
         self.retriever = retriver
         self.query = query
@@ -353,11 +357,12 @@ class MCQChat:
         self.few_shot = few_shot
         self.summary = summary
         self.subject = subject
+        self.use_notebook = use_notebook
         self.model = 'gpt-4o-mini' if self.model_provider == 'OpenAI' else 'claude-3-sonnet-20240229' ## TODO implement Claude (claudette: https://github.com/AnswerDotAI/claudette)
 
         config_list = {'config_list': [{
                 'model': self.model,
-                'api_key': st.session_state["API_KEY"],
+                'api_key': st.session_state["API_KEY"] if not self.use_notebook else self.use_notebook,
                 "api_type": "openai" if self.model_provider == "OpenAI" else "anthropic",
                 "temperature":random.uniform(0.8, 1.2)
             }]
