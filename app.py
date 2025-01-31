@@ -58,6 +58,10 @@ num_questions_total = st.number_input("Enter total number of questions", min_val
 num_questions = st.number_input("Enter number of questions per topic", min_value=1, max_value=10, help=num_questions_help)
 topic_num = num_questions_total // num_questions
 
+st.warning("""
+        Do not under any circumstances upload any sensitive or private information to this application.
+        This application is not private and should not be used to process any sensitive information.
+    """.strip())
 cc_uploaded_files = st.file_uploader(
     "Upload course content", accept_multiple_files=True
 )
