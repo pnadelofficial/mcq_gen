@@ -8,6 +8,7 @@ from functools import partial
 import subprocess
 import prompts
 from openai import OpenAI
+import uuid
 from anthropic import Anthropic
 
 st.title("Multiple Choice Question Generation")
@@ -21,6 +22,8 @@ key_input = utils.get_api_key_sidebar()
 #         st.session_state['CLIENT'] = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
     
 name = st.text_input("Enter your course title", key='name_input')
+random_uuid = uuid.uuid4()
+name = name + "_" + str(random_uuid)
 if (st.session_state.get('name') is None) or (st.session_state.get('name') != name):
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
     data_dir = os.path.join(BASE_DIR, "data", name)
