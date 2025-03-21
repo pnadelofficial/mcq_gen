@@ -52,7 +52,7 @@ class Summarizer:
             completion = self.client.messages.create(
                 model="claude-3-sonnet-20240229",
                 messages=[{"role":"assistant", "content":prompts.SUMMARIZER.format(transcript=self.text)}],
-                temperature=random.uniform(0.8, 1.2)
+                temperature=random.uniform(0.6, 1.0)
             )
         else:
             completion = self.client.chat.completions.create(
