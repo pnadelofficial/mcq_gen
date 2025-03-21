@@ -1,4 +1,4 @@
-pyautogen
+pyautogen==0.8.1
 pandas
 numpy 
 langchain
