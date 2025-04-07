@@ -461,6 +461,6 @@ class MCQChat:
     
     def to_df(self, qs):
         cols = [(re.sub(r'[A-z0-9]+\)', '',a) for a in list(q)) for q in qs if q]
-        return pd.DataFrame(cols, columns=['question', 'altA', 'distractor1', 'distractor2', 'distactor3', 'distractor4', 'distractor5', 'distractor6'])
+        return pd.DataFrame(cols, columns=['question', 'altA', 'distractor1', 'distractor2', 'distractor3', 'distractor4', 'distractor5', 'distractor6'])
 
         

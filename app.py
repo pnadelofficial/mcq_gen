@@ -159,5 +159,5 @@ if st.button("Start Over"):
     subprocess.run(["rm", "-rf", f"./data/{name}"])
     st.rerun()
 
-st.markdown("<footer><small>Assembed by Peter Nadel | Tufts University | Tufts Technology Services | Reserch Technology </small></footer>", unsafe_allow_html=True)
+st.markdown("<footer><small>Assembed by Peter Nadel | Tufts University | Tufts Technology Services | Research Technology </small></footer>", unsafe_allow_html=True)
 st.markdown("<footer><small>Reach out to <a href='mailto:tts-research@tufts.edu'>Research Technology</a> for any questions or concerns.</small></footer>", unsafe_allow_html=True) 

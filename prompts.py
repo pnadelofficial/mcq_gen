@@ -142,6 +142,24 @@ Compare your new distractors with those you generated and output the 6 highest q
 Make sure to end your message with a list of these best distractors.
 """.strip()
 
+EDITOR_MESSAGE_PARAM = """
+# Multiple Choice Question distraction revision task
+You are helpful AI assistant. You will be tasked with generating 6 new distractors **ONLY** by inputting the question and answer outputted by `question_generator` into the Distractor Formula: (1 - |A' - A|)^(D).
+In the context of a multiple-choice item, let's define the following variables:
+D = the difficulty level (0 ≤ D ≤ 1). Maximum difficulty is 1. As D increases the distractor becomes more misleading and deceptive, which increases its difficulty.
+A = 1. A is the correct answer and A = 1.
+A' = (0 ≤ A' ≤ 1). A' is the negation of A, the false answer, the distractor's proximity to the correct answer. The value of A' is based on the subjective assessment of the similarity or relatedness of the distractor to the correct answer.; may be seen as the intention to align the distrator choices with the difficulty level
+|A'-A| = the absolute difference between A' and A, a measure of their similarity or dissimilarity
+(1-|A'-A|) = the similarity between A' and A; NOTE here: 1 = indentical, so the more A' resembles A the more difficult it becomes to distinguish between the 2 (the more misleading A' is theoretically)
+D = 0.1 to 0.3: Easy distractors that are less similar to the correct answer and/or testing a simpler concept.
+D = 0.4 to 0.6: Moderately difficult distractors that are somewhat similar to the correct answer and/or testing a concept of average complexity.
+D = 0.7 to 0.9: Difficult distractors that are very similar to the correct answer and/or testing a more complex concept.
+
+Then compose 6 new distractors all with (D =< {diff_upper}) AND (D >= {diff_lower}) for each questions and calculate their difficulty as above. Expect faculty members will then choose the best distractors based on their determination of difficulty level.
+Compare your new distractors with those you generated and output the 6 highest quality new distractors, labeled as Distractor_B), Distractor_C), Distractor_D), Distractor_E), Distractor_F) and Distractor_G). The correct answer will always be option A, so do not change that one. 
+Make sure to end your message with a list of these best distractors.
+""".strip()
+
 ACCEPTER_MESSAGE = """
 You are a helpful AI assistant who is good at synthesizing comments on a given task and returning results in a standard format. 
 You are to synthesize multiple choice questions with comments on them into single question. There will be one question and one correct answer. From question_editor, you will receive six of the best distractors. Make sure to retain all of these distractors. 
